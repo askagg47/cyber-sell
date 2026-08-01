@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CYBER CAM PRO • Face Detection</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a12;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: #12121f;
+            border-radius: 40px;
+            padding: 30px 25px;
+            border: 1px solid #00ffc8;
+            box-shadow: 0 0 70px rgba(0,255,200,0.08);
+            text-align: center;
+        }
+        h1 {
+            color: #00ffc8;
+            font-size: 22px;
+            text-shadow: 0 0 30px #00ffc860;
+            margin-bottom: 6px;
+        }
+        .sub {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+        .video-wrapper {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #000;
+            border: 2px solid #00ffc8;
+        }
+        video {
+            width: 100%;
+            display: block;
+            transform: scaleX(-1);
+            background: #0d0d0d;
+        }
+        canvas {
+            display: none;
+        }
+        #hasilFoto {
+            margin-top: 14px;
+            max-width: 100%;
+            border-radius: 20px;
+            border: 2px solid #00ffc8;
+            display: none;
+            background: #000;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 16px;
+        }
+        .btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 14px;
+            border: none;
+            border-radius: 60px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.3s;
+          }
+      btn-primary { background: #00ffc8; color: #0d0d0d; }
+        .btn-primary:hover { background: #00cc9e; transform: scale(1.02); }
+        .btn-danger { background: #ff3366; color: #fff; }
+        .btn-danger:hover { background: #cc0033; transform: scale(1.02); }
+        .btn-warning { background: #ffaa00; color: #0d0d0d; }
+        .btn-warning:hover { background: #cc8800; transform: scale(1.02); }
+        .btn-secondary { background: #2a2a3a; color: #fff; }
+        .btn-secondary:hover { background: #3a3a4a; transform: scale(1.02); }
+        #status {
+            margin-top: 16px;
+            background: #0a0a16;
+            padding: 12px 16px;
+            border-radius: 30px;
+            border: 1px solid #1a1a2a;
+            color: #aaa;
+            font-size: 13px;
+  }
+  #status .online { color: #00ffc8; }
+        #status .offline { color: #ff3366; }
+        .footer {
+            color: #333;
+            font-size: 11px;
+            margin-top: 20px;
+            border-top: 1px solid #181825;
+            padding-top: 16px;
+        }
+        .footer span { color: #00ffc8; }
+        .face-box {
+            position: absolute;
+            border: 3px solid #00ffc8;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0,255,200,0.4);
+            pointer-events: none;
+            display: none;
+        }
+        .label-deteksi {
+            color: #00ffc8;
+            font-size: 13px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>📸 CYBER CAM <span style="font-size:14px;color:#ff3366;">PRO</span></h1>
+    <p class="sub">Face Detection • Mirror • Foto • Rekam</p>
+
+    <div class="video-wrapper">
+        <video id="video" autoplay playsinline></video>
+        <div class="face-box" id="faceBox"></div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+    <img id="hasilFoto" alt="Hasil foto" />
+
+    <div class="label-deteksi" id="deteksiStatus">🔄 Deteksi wajah: <span id="faceCount">0</span> wajah</div>
+
+    <div class="btn-group">
+        <button class="btn btn-primary" id="btnFoto">📷 FOTO</button>
+        <button class="btn btn-danger" id="btnRekam">🔴 REKAM</button>
+        <button class="btn btn-warning" id="btnStop">⏹ STOP</button>
+        <button class="btn btn-secondary" id="btnReset">🔄 RESET</button>
+    </div>
+
+    <div id="status">
+        🔘 Status: <span id="statusText" class="offline">Menunggu kamera...</span>
+    </div>
+
+    <div class="footer">
+        <span>CYBER SEVEN</span> • ASKAA 47 • 31/07/2026 • 😎
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+  // ===== ELEMEN =====
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const hasilFoto = document.getElementById('hasilFoto');
+    const statusText = document.getElementById('statusText');
+    const faceBox = document.getElementById('faceBox');
+    const faceCount = document.getElementById('faceCount');
+
+    const btnFoto = document.getElementById('btnFoto');
+    const btnRekam = document.getElementById('btnRekam');
+    const btnStop = document.getElementById('btnStop');
+    const btnReset = document.getElementById('btnReset');
+
+  let stream = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let detectionInterval = null;
+
+  // ===== LOAD FACE API =====
+    async function loadFaceApi() {
+        try {
+            await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights');
+            statusText.textContent = '✅ Face detection siap!';
+            statusText.className = 'online';
+            return true;
+        } catch (err) {
+            statusText.textContent = '⚠️ Face detection gagal load, tapi kamera tetap jalan.';
+            return false;
+        }
+  }
+
+ // ===== START KAMERA =====
+    async function startCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                audio: false
+            });
+            video.srcObject = stream;
+            statusText.textContent = '✅ Kamera aktif + Face detection jalan';
+            statusText.className = 'online';
+            startFaceDetection();
+        } catch (err) {
+            statusText.textContent = '❌ Gagal akses kamera: ' + err.message;
+            statusText.className = 'offline';
+        }
+  }
+
+  // ===== FACE DETECTION =====
+    function startFaceDetection() {
+        if (detectionInterval) clearInterval(detectionInterval);
+        detectionInterval = setInterval(async () => {
+            if (!video.videoWidth || !video.videoHeight) return;
+
+            const detections = await faceapi.detectAllFaces(
+                video,
+                new faceapi.TinyFaceDetectorOptions({
+                    inputSize: 224,
+                    scoreThreshold: 0.5
+                })
+            );
+
+                                       faceCount.textContent = detections.length;
+
+            if (detections.length > 0) {
+                const d = detections[0].box;
+                const rect = video.getBoundingClientRect();
+                const scaleX = rect.width / video.videoWidth;
+                const scaleY = rect.height / video.videoHeight;
+
+                faceBox.style.display = 'block';
+                faceBox.style.left = (d.x * scaleX) + 'px';
+                faceBox.style.top = (d.y * scaleY) + 'px';
+                faceBox.style.width = (d.width * scaleX) + 'px';
+                faceBox.style.height = (d.height * scaleY) + 'px';
+            } else {
+                faceBox.style.display = 'none';
+            }
+        }, 200);
+  }
+
+  // ===== FOTO =====
+    btnFoto.addEventListener('click', function() {
+        if (!stream) {
+            statusText.textContent = '❌ Kamera belum nyala!';
+            statusText.className = 'offline';
+            return;
+        }
+
+        const w = video.videoWidth || 640;
+        const h = video.videoHeight || 480;
+        canvas.width = w;
+        canvas.height = h;
+
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, -w, 0, w, h);
+        ctx.restore();
+
+        // Gambar kotak deteksi di foto
+        const detections = faceapi.detectAllFacesSync(video, new faceapi.TinyFaceDetectorOptions());
+        if (detections.length > 0) {
+            ctx.strokeStyle = '#00ffc8';
+            ctx.lineWidth = 4;
+            ctx.shadowColor = '#00ffc8';
+            ctx.shadowBlur = 20;
+            detections.forEach(d => {
+                const box = d.box;
+                ctx.strokeRect(w - box.x - box.width, box.y, box.width, box.height);
+            });
+            ctx.shadowBlur = 0;
+        }
+
+        const dataUrl = canvas.toDataURL('image/png');
+        hasilFoto.src = dataUrl;
+        hasilFoto.style.display = 'block';
+
+        statusText.textContent = '📸 Foto + face detection berhasil!';
+        statusText.className = 'online';
+    });
+
+  // ===== REKAM =====
+    btnRekam.addEventListener('click', function() {
+        if (!stream) {
+            statusText.textContent = '❌ Kamera belum nyala!';
+            statusText.className = 'offline';
+            return;
+        }
+        if (isRecording) {
+            statusText.textContent = '⏳ Masih rekam, stop dulu!';
+            return;
+        }
+
+        recordedChunks = [];
+        try {
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+        } catch {
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        }
+
+        mediaRecorder.ondataavailable = function(e) {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = function() {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cybercam_' + Date.now() + '.webm';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            statusText.textContent = '✅ Video selesai & terdownload!';
+            isRecording = false;
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        statusText.textContent = '🔴 REKAMAN BERJALAN...';
+    });
+
+  // ===== STOP =====
+    btnStop.addEventListener('click', function() {
+        if (mediaRecorder && isRecording) {
+            mediaRecorder.stop();
+            isRecording = false;
+            statusText.textContent = '⏹ Rekaman dihentikan.';
+        } else {
+            statusText.textContent = '⏹ Tidak ada rekaman.';
+        }
+    });
+
+  // ===== RESET =====
+    btnReset.addEventListener('click', function() {
+        hasilFoto.style.display = 'none';
+        hasilFoto.src = '';
+        faceBox.style.display = 'none';
+        statusText.textContent = '🔄 Di-reset. Siap pakai!';
+    });
+
+    // ===== JALANKAN =====
+    loadFaceApi().then(() => startCamera());
+
+    console.log('🔥 CYBER CAM PRO • Face Detection • ASKAA 47');
+</script>
+</body>
+</html>
